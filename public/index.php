@@ -332,6 +332,8 @@ for($i = 1; $i <= count($candidates); $i++)
         clearInterval(timerInterval);
         $timer.hide();
         $message.text('Voting system is currently closed.');
+        $standings.hide();
+        $('.time').hide();
         timeUp = true;
       }
     }
@@ -349,5 +351,6 @@ for($i = 1; $i <= count($candidates); $i++)
     updateStandings();
 
   });
+</script>
 </body>
 </html>
