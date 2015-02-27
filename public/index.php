@@ -158,7 +158,7 @@ if($enabled == "0") {
 }
 else {
   print "<div align=\"center\" class=\"vote\"><em id=\"voting-message\">Text your votes (1-" . $numCandidates . ") to <strong>" . $phone . "</strong> " .
-      "<span style=\"font-size:80%\">"  . $realphone . "</span></em></div>";
+      "<span style=\"font-size:75%\"> / "  . $realphone . "</span></em></div>";
   print "<div>&nbsp;</div>";
   print "<div align=\"center\" class=\"time\">Time remaining: <strong id=\"timer\">" .$timeleftmin . ":";
   printf("%02s",$timeleftsec);
