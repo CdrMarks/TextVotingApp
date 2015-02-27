@@ -81,7 +81,6 @@ for($i = 1; $i <= $numCandidates; $i++) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta http-equiv="refresh" content="2" /> 
 <title><?php print $title; ?> Voting Results!</title>
 <style type="text/css">
 .header {
@@ -155,16 +154,17 @@ if($timeleft <= 0) {
 
 // Not enabled? Immediately send invalid response
 if($enabled == "0") {
-  print "<div align=\"center\" class=\"vote\"><em>Voting system is currently closed.</em></div>";
+  print "<div align=\"center\" class=\"vote\"><em id=\"voting-message\">Voting system is currently closed.</em></div>";
 }
 else {
-  print "<div align=\"center\" class=\"vote\"><em>Text your votes (1-" . $numCandidates . ") to <strong>" . $phone . "</strong> " .
+  print "<div align=\"center\" class=\"vote\"><em id=\"voting-message\">Text your votes (1-" . $numCandidates . ") to <strong>" . $phone . "</strong> " .
       "<span style=\"font-size:80%\">"  . $realphone . "</span></em></div>";
   print "<div>&nbsp;</div>";
-  print "<div align=\"center\" class=\"time\">Time remaining: <strong>" .$timeleftmin . ":";
+  print "<div align=\"center\" class=\"time\">Time remaining: <strong id=\"timer\">" .$timeleftmin . ":";
   printf("%02s",$timeleftsec);
   print "</strong></div>\n"; 
 
+  print "<div id=\"current-standings\">\n";
   print "<div><strong>Current standings:</strong></div>\n";
   print "<div>Total votes: $totalVotes\n";
   if($totalVotes >= 1)
@@ -198,6 +198,7 @@ else {
       }
       print "</div>\n";
   }
+  print "</div><!-- #current-standings -->\n";
       
 
 }
@@ -313,5 +314,40 @@ for($i = 1; $i <= count($candidates); $i++)
 <div align="center" class="disclaimer">Your data rates may apply. We won't invade your privacy, sell your number, or spam you.</div>
 <div>&nbsp;</div>
 <div align="center" class="credits"><img src="images/twilio_logo.png" width="150" height="45" /><br />Developed by Sarah Withee</div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/zepto/1.1.4/zepto.min.js"></script>
+<script>
+  Zepto(function($){
+    var secondsLeft = <?php echo $timeleftmin * 60 + $timeleftsec; ?>,
+             $timer = $('#timer'),
+         $standings = $('#current-standings'),
+           $message = $('#voting-message'),
+        timeUp = secondsLeft <= 0;
+
+    function updateTimer () {
+      secondsLeft--;
+      var minutes = Math.floor(secondsLeft / 60.0),
+          seconds = secondsLeft % 60;
+      $timer.text(minutes + ":" + ((seconds < 10 ) ? "0" : "") + seconds);
+      if(secondsLeft <= 0) { 
+        clearInterval(timerInterval);
+        $timer.hide();
+        $message.text('Voting system is currently closed.');
+        timeUp = true;
+      }
+    }
+    updateTimer();
+    var timerInterval = setInterval(updateTimer, 1000);
+
+    function updateStandings () {
+      $.get('standings.php', function(html){
+        $standings.html(html);
+        if(! timeUp) {
+          setTimeout(updateStandings, 2000);
+        }
+      });
+    }
+    updateStandings();
+
+  });
 </body>
 </html>
