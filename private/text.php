@@ -1,4 +1,12 @@
 <?php
+require_once("mysql.php");
+
+// Include Ephiphany for DB commands
+
+$tblSettings = "textvote_settings";
+$tblCandidates = "textvote_choices";
+$tblVotes = "textvote_votes";
+
 // Response functions
 function smsHeader() {
   header("content-type: text/xml");
@@ -8,7 +16,7 @@ function smsHeader() {
 function smsVotingOver() {
   smsHeader();
   print "<Response>\n";
-  print "<Sms>The Mr. Engineer voting system isn't currently open. Sorry!</Sms>\n";
+  print "<Sms>The Engineer of the Year voting system isn't currently open. Sorry!</Sms>\n";
   print "</Response>\n";
 }
 function smsNAN() {
@@ -50,26 +58,16 @@ function smsThanks($theVote) {
   smsHeader();
   //$v = intval($v);
   print "<Response>\n";
-  print "<Sms>Your vote for " . $theVote . " was recorded. SWE would like to thank you for coming to Mr. Engineer!</Sms>\n";
+  print "<Sms>Your vote for " . $theVote . " was recorded. SWE would like to thank you for coming to Engineer of the Year!</Sms>\n";
   print "</Response>\n";
 }
 
-
-// Remove comments when voting is over
-
-// smsVotingOver();
-
-// Connect to database
-$mysqli = new mysqli('localhost', 'table', 'password', 'database');
-if ($mysqli->connect_errno) {
-    printf("Connect failed: %s\n", $mysqli->connect_error);
-    exit();
-}
-
-$query = "SELECT value FROM setting WHERE setting = 'enabled'";
+// Find out if voting is enabled or not
+$query = "SELECT value FROM textvote_setting WHERE setting = 'enabled'";
 $result = $mysqli->query($query);
 $row = $result->fetch_array(MYSQLI_NUM);
 $enabled = $row[0];
+
 
 // Not enabled? Immediately send invalid response
 if($enabled == "0") {
@@ -77,20 +75,39 @@ if($enabled == "0") {
   die();
 }
 
+//***************************************************
+//                  pick back up here
 
-$numVotes = 7;
-$name[1] = "name";
-$name[2] = "name";
-$name[3] = "name";
-$name[4] = "name";
-$name[5] = "name";
-$name[6] = "name";
-$name[7] = "name";
+// Get candidates
+$numCandidates = 1;
+//$candidates[0] = "";
+//$images[0] = "";
+$query = "SELECT * FROM textvote_choices ORDER BY id";
+if($result = $mysqli->query($query))
+{
+    while($obj = $result->fetch_object())
+    {
+        $candidates[$numCandidates] = $obj->firstname . " " . $obj->lastname;
+        $Fcandidates[$numCandidates] = $obj->firstname;
+        $images[$numCandidates] = $obj->imgsrc;
+        $numCandidates++;
+    }
+    $numCandidates--;    // off by one error
+}
+else
+{
+    die("Error on retrieving candidates");
+}
+
 
 
 // Get info from Twilio
 $phone = $_REQUEST['From'];
 $vote = $_REQUEST['Body'];
+
+// Record log
+$query = "INSERT INTO textvote_log (phone, body) VALUES ('" . $phone . "','" . $vote . "');";
+$result = $mysqli->query($query);
 
 
 
@@ -107,7 +124,7 @@ if(!is_numeric($vote)) {
 }
 
 // Vote should only be one number, keep only one number
-if(intval($vote) < 1 || intval($vote) > $numVotes) {
+if(intval($vote) < 1 || intval($vote) > $numCandidates) {
   smsErrorBadVote();
   die();
 }
@@ -116,7 +133,7 @@ if(intval($vote) < 1 || intval($vote) > $numVotes) {
 $vote = $mysqli->real_escape_string($vote);
 
 // Performing SQL query
-$query = "SELECT * FROM votes WHERE phone LIKE '$phone'";
+$query = "SELECT * FROM textvote_votes WHERE phone LIKE '$phone'";
 $result = $mysqli->query($query);
 
 // If results >1, we have other problems
@@ -127,10 +144,10 @@ if($result->num_rows > 1) {
 
 // If results =1, send error
 if($result->num_rows == 1) {
-  $query2 = "UPDATE votes SET vote = '" . $vote . "' WHERE phone = '" . $phone . "';";
+  $query2 = "UPDATE textvote_votes SET vote = '" . $vote . "' WHERE phone = '" . $phone . "';";
   $result2 = $mysqli->query($query2);
 //  smsErrorAlreadyVoted();
-  smsDuplicateVote($name[$vote]);
+  smsDuplicateVote($Fcandidates[$vote]);
 
   die();
 }
@@ -138,9 +155,9 @@ if($result->num_rows == 1) {
 // If results = 0, insert vote
 // In theory, only 0 rows left...
 //if($result->num_rows == 0) {
-  $query2 = "INSERT INTO votes (phone, vote) VALUES ('" . $phone . "','" . $vote . "');";
+  $query2 = "INSERT INTO textvote_votes (phone, vote) VALUES ('" . $phone . "','" . $vote . "');";
   $result2 = $mysqli->query($query2);
-  smsThanks($name[$vote]);
+  smsThanks($Fcandidates[$vote]);
 //}
 
 // Free resultset
