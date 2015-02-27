@@ -81,7 +81,6 @@ for($i = 1; $i <= $numCandidates; $i++) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta http-equiv="refresh" content="2" /> 
 <title><?php print $title; ?> Voting Results!</title>
 <style type="text/css">
 .header {
@@ -161,7 +160,7 @@ else {
   print "<div align=\"center\" class=\"vote\"><em>Text your votes (1-" . $numCandidates . ") to <strong>" . $phone . "</strong> " .
       "<span style=\"font-size:80%\">"  . $realphone . "</span></em></div>";
   print "<div>&nbsp;</div>";
-  print "<div align=\"center\" class=\"time\">Time remaining: <strong>" .$timeleftmin . ":";
+  print "<div align=\"center\" class=\"time\">Time remaining: <strong id=\"timer\">" .$timeleftmin . ":";
   printf("%02s",$timeleftsec);
   print "</strong></div>\n"; 
 
@@ -313,5 +312,18 @@ for($i = 1; $i <= count($candidates); $i++)
 <div align="center" class="disclaimer">Your data rates may apply. We won't invade your privacy, sell your number, or spam you.</div>
 <div>&nbsp;</div>
 <div align="center" class="credits"><img src="images/twilio_logo.png" width="150" height="45" /><br />Developed by Sarah Withee</div>
+      var secondsLeft = <?php echo $timeleftmin * 60 + $timeleftsec; ?>,
+               $timer = document.getElementById('timer');
+      function updateTimer () {
+        secondsLeft--;
+        var minutes = Math.floor(secondsLeft / 60.0),
+            seconds = secondsLeft % 60;
+        $timer.innerText = minutes + ":" + ((seconds < 10 ) ? "0" : "") + seconds;
+        if(secondsLeft <= 0) { 
+          clearInterval(timerInterval);
+        }
+      }
+      updateTimer();
+      var timerInterval = setInterval(updateTimer, 1000);
 </body>
 </html>
