@@ -5,10 +5,16 @@ require_once("mysql.php");
 
 // Pull query string
 if(isset($_GET['enable'])) {
-  $enable = $_GET['enable'];
+    $enable = $_GET['enable'];
 }
 else {
-  $enable = -1;
+    $enable = -1;
+}
+if(isset($_GET['deleteAllVotes'])) {
+    $deleteAllVotes = $_GET['deleteAllVotes'];
+}
+else {
+    $deleteAllVotes = -1;
 }
 
 
@@ -97,6 +103,15 @@ else if($enable == "0") {
   print "<div>Disabled!</div>\n\n";
 }
 
+else if($deleteAllVotes == "1")
+{
+    $query = "TRUNCATE TABLE textvote_votes";
+    $result = $mysqli->query($query);
+    if($result == false)
+        print "ERROR on deleting votes: " . $mysqli->error;
+
+    print "<div>Votes deleted!</div>\n\n";
+}
 
 $query = "SELECT value FROM textvote_setting WHERE setting = 'enabled'";
 $result = $mysqli->query($query);
@@ -116,8 +131,8 @@ $time_to_quit = (int) $row[0];
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta http-equiv="refresh" content="30;url=http://www.sarahwithee.com/swe/admin.php" /> 
-<title>Mr. Engineer Voting Results!</title>
+<meta http-equiv="refresh" content="15;url=http://www.sarahwithee.com/swe/admin.php" />
+<title>Engineer of the Year Voting Results!</title>
 <style type="text/css">
 .header {
 	font-family: Calibri, Verdana, Geneva, sans-serif;
@@ -150,7 +165,7 @@ body {
 
 <body>
 
-<h2>SWE Mr. Engineer Admin system</h2>
+<h2>SWE Engineer of the Year Admin system</h2>
 
 <div>Voting system: Currently <?php 
 if($enabled == "0") print "disabled";
@@ -172,8 +187,6 @@ print date("h:i:s a",time());
 <div>Time until disabled: <?php
 print date("h:i:s a",$time_to_quit);
 ?>
-
-
 </div>
 <div>&nbsp;</div>
 
@@ -184,6 +197,12 @@ for($i = 1; $i <= $numCandidates; $i++) {
   $name[$i] = str_replace("&nbsp;", "", $candidates[$i]);
   print "<div>$i: " . $candidates[$i] . " - " . $vote[$i] . "</div>\n";
 } ?>
+
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>WARNING!!! DESTRUCTIVE ACTION!</div>
+<div><a href="admin.php?deleteAllVotes=1">Delete votes</a></div>
 
 </body>
 </html>
